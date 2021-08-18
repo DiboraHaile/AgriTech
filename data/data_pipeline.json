@@ -1,0 +1,14 @@
+[
+    {
+        "type": "readers.ept",
+        "filename": "",
+        "tag":"read_data"
+    },
+    {
+        "type":"writers.text",
+        "format":"geojson",
+        "order":"X,Y,Z",
+        "keep_unspecified":"false",
+        "filename":"outputfile.txt"
+    }
+]
