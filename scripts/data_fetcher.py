@@ -1,36 +1,53 @@
+import pdal
 import json
-import pdal 
-import os
+from json import load, dumps
 import sys
-sys.path.append(os.path.abspath(os.path.join('../')))
+import geopandas as gpd
+from shapely.geometry import Point
 
-class FetchData():
-    def __init__(self,public_data_path,region,bounds,pipeline_def):
-        self.pipeline_df = pipeline_def
-        self.public_data_path = public_data_path
-        self.region = region
-        self.public_access_path = self.public_data_path + self.region + "ept.json"
-        self.bounds = bounds
-        self.pipeline_def = pipeline_def
-        self.output_file = "data/data.geojson"
-        self.set_pipeline_df()
-        self.execute_pipeline()
+class FetchData:
+    """ fetches data given public data path, region and polygon """
+    def __init__(self,public_data_path,region,polygon_bound):
+       # initialize variables
+       self.public_data_path = public_data_path
+       self.region = region
+       self.public_access_path = self.public_data_path + self.region + "ept.json"
+       self.polygon = polygon_bound
+       # set and execute pipeline
+       self.fetch_data()
 
+    def fetch_data(self):
+       self.set_pipeline_df()
+       self.execute_pipeline()
+       self.get_elevation()
+ 
     def set_pipeline_df(self):
-        # self.pipeline_def[-1]["filename"] = self.output_file
-        self.pipeline_def[0]['filename'] = self.public_access_path
-        print(self.pipeline_def)
-        self.pipeline_def[0]['bounds'] = self.bounds
-        pipeline_json =  json.dumps(self.pipeline_def)
-        self.pipeline = pdal.Pipeline(pipeline_json)
+       self.data_pipeline_json = json.load(open("../data/pipeline.json"))
+       self.data_pipeline_json["pipeline"][0]['filename'] = self.public_access_path
+       self.data_pipeline_json["pipeline"][1]['polygon'] = self.polygon
+       self.pipeline = pdal.Pipeline(json.dumps(self.data_pipeline_json))
+
+   
+    def get_elevation(self):
+        geodf = gpd.GeoDataFrame()
+        elevations = []
+        geometry = []
+        for row in self.self.pipeline.arrays()[0]:
+            value_list = row.tolist()[-3:]
+            geometry.append(Point(value_list[0], value_list[1]))
+            elevations.append(value_list[2])
+        geodf['elevation'] = elevations
+        geodf['geometry'] = geometry
+        self.geodf = geodf.set_crs(epsg=4326)
+
 
     def execute_pipeline(self):
-        if os.path.exists(self.output_file):
-            os.remove(self.output_file)
-            
-        self.pipeline.execute()
-        data = open(self.output_file, 'r').read()
-        data = data.replace("[,{", "[{").replace("}{", "},{")
-        open(self.output_file, 'w').write(data)
+       self.count = self.pipeline.execute()
 
-        
+    def return_pipeline(self):
+       return self.pipeline
+
+    def return_elevation(self):
+       return self.geodf
+    
+
