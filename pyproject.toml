@@ -1,0 +1,16 @@
+[build-system]
+requires = [
+    "setuptools>=42",
+    "wheel",
+    "pdal",
+    "numpy",
+    "rasterio",
+    "Fiona==1.8.20"
+    "GDAL==3.3.1"
+    "geopandas "
+    "laszip==0.1.0"
+    "matplotlib "
+    "PDAL==2.4.2"
+    "Shapely" 
+]
+build-backend = "setuptools.build_meta"
